@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="salto" href="#contenido">Saltar al contenido</a>
-<header><div class="ancho barra"><a class="marca" href="#inicio">Programación Concurrente</a><nav aria-label="Secciones"><a href="#teoria">Teoría</a><a href="#laboratorio">Laboratorio</a><a href="#actividad">Actividad</a><a href="#rust">Rust</a></nav></div></header>
+<header><div class="ancho barra"><a class="marca" href="#inicio">Programación Concurrente</a><nav aria-label="Secciones"><a href="#teoria">Teoría</a><a href="#laboratorio">Laboratorio</a><a href="editor.html">Editor</a><a href="#actividad">Actividad</a><a href="#rust">Rust</a></nav></div></header>
 <main id="contenido">
 <section class="portada" id="inicio"><div class="ancho hero"><div><p class="etiqueta">FIUBA · MÓDULO 11</p><h1>Redes de Petri</h1><p>Modelá sistemas concurrentes, dispará transiciones y comprobá qué estados pueden alcanzar.</p><a class="boton" href="#laboratorio">Abrir el laboratorio</a></div><div class="insignia" aria-hidden="true">●<span>⟶</span>▮<span>⟶</span>○</div></div></section>
 <div class="ancho contenido">
@@ -36,7 +36,7 @@
 <h3>Del requisito a la implementación</h3><p>Definí los eventos y supuestos, construí la red, formulá las propiedades y buscá pruebas o contraejemplos. Para redes finitas, el grafo de alcanzabilidad permite decidir las propiedades anteriores. En redes sin cota, una BFS puede continuar indefinidamente. El árbol de cobertura puede detectar crecimiento mediante ω y responde preguntas de cobertura, como si se pueden alcanzar al menos n marcas, con una semántica distinta de la alcanzabilidad exacta. Contrastá luego las trazas con el código y las pruebas de integración.</p>
 </section>
 <section id="laboratorio"><p class="etiqueta">SIMULACIÓN</p><h2>Laboratorio de disparos</h2>
-<p>Elegí un modelo, dispará una transición habilitada y seguí cómo cambian las marcas. La exploración comienza en el marcado inicial.</p>
+<p>Elegí un modelo, dispará una transición habilitada y seguí cómo cambian las marcas. La exploración comienza en el marcado inicial. <a href="editor.html">Creá y simulá tu propia red</a>.</p>
 <div class="laboratorio">
 <label for="modelo">Modelo</label><select id="modelo"></select>
 <h3 id="nombre"></h3><p id="descripcion"></p>
