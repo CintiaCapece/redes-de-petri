@@ -8,6 +8,20 @@ Material de Programación Concurrente de la Facultad de Ingeniería de la Univer
 
 La fuente de publicación es la raíz de `main`. La configuración se encuentra en [Settings → Pages](https://github.com/CintiaCapece/redes-de-petri/settings/pages). Para una vista local, abrí [index.html](index.html) en un navegador.
 
+## Editor interactivo
+
+Abrí el [editor en GitHub Pages](https://cintiacapece.github.io/redes-de-petri/editor.html) o [editor.html](editor.html) en forma local. Creá lugares y transiciones, conectalos con arcos dirigidos y configurá el marcado inicial y los pesos. Podés disparar transiciones, deshacer pasos y explorar hasta 500 marcados alcanzables.
+
+**Descargar Rust** genera `red_petri.rs` con las matrices Pre y Post de tu red. El código usa solo la biblioteca estándar. En PowerShell:
+
+```powershell
+rustc --edition 2021 red_petri.rs
+.\red_petri.exe --explorar
+.\red_petri.exe 0 1
+```
+
+Los números son los índices de las transiciones que querés disparar en orden. Ejecutá el programa sin argumentos para consultar los índices y el marcado inicial.
+
 ## Ejemplos en Rust
 
 Instalá Rust estable y Cargo con [rustup](https://rust-lang.org/tools/install/). Desde la raíz del repositorio:
