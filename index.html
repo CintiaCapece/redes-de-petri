@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Módulo 11 de Programación Concurrente. Teoría, simulaciones y resolución de la Actividad 11.">
+<title>Redes de Petri · Programación Concurrente</title>
+<link rel="stylesheet" href="estilos.css">
+<script defer src="laboratorio.js"></script>
+</head>
+<body>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+<header><div class="ancho barra"><a class="marca" href="#inicio">Programación Concurrente</a><nav aria-label="Secciones"><a href="#teoria">Teoría</a><a href="#laboratorio">Laboratorio</a><a href="#actividad">Actividad</a><a href="#rust">Rust</a></nav></div></header>
+<main id="contenido">
+<section class="portada" id="inicio"><div class="ancho hero"><div><p class="etiqueta">FIUBA · MÓDULO 11</p><h1>Redes de Petri</h1><p>Modelá sistemas concurrentes, dispará transiciones y comprobá qué estados pueden alcanzar.</p><a class="boton" href="#laboratorio">Abrir el laboratorio</a></div><div class="insignia" aria-hidden="true">●<span>⟶</span>▮<span>⟶</span>○</div></div></section>
+<div class="ancho contenido">
+<section id="teoria">
+<p class="etiqueta">FUNDAMENTOS</p><h2>De la topología al comportamiento</h2>
+<p>Con N procesos y M estados locales por proceso hay hasta M<sup>N</sup> combinaciones de estados locales. El estado global puede incluir también memoria compartida y canales. Las pruebas ejecutan algunas planificaciones. Un modelo permite razonar sobre todas las ejecuciones que admite, siempre dentro de sus supuestos.</p>
+<div class="rejilla">
+<article class="tarjeta"><h3>Red marcada</h3><p>N = (P, T, F, W, M₀). P y T son conjuntos finitos y disjuntos de lugares y transiciones. F ⊆ (P × T) ∪ (T × P). W asigna un entero positivo a cada arco. Un arco ausente tiene peso cero. Un marcado M asigna a cada lugar una cantidad entera no negativa de marcas. M₀ es el marcado inicial.</p></article>
+<article class="tarjeta"><h3>Habilitación y disparo</h3><p>Con lugares por fila y transiciones por columna, Pre[p,t] = W(p,t) y Post[p,t] = W(t,p). La condición de habilitación es M ≥ Pre[:,t], componente a componente. El disparo es atómico y produce M′ = M − Pre[:,t] + Post[:,t]. El modelo básico carece de duraciones.</p></article>
+<article class="tarjeta"><h3>Incidencia e invariantes</h3><p>C = Post − Pre. Si una secuencia realizable tiene vector de conteos σ, entonces M = M₀ + Cσ. La ecuación es necesaria y puede admitir soluciones sin una secuencia habilitada. Si yᵀC = 0, entonces yᵀM = yᵀM₀ para todo marcado alcanzable. Un autoarco puede dar una entrada cero en C y seguir exigiendo marcas en Pre.</p></article>
+<article class="tarjeta"><h3>Concurrencia, sincronización y conflicto</h3><p>Dos transiciones distintas pueden dispararse conjuntamente si M cubre la suma de sus entradas. Un join exige todas sus entradas a la vez. Hay conflicto efectivo si ambas están habilitadas por separado y compiten por marcas insuficientes para el disparo conjunto. Dos arcos unitarios que comparten un lugar con dos marcas pueden dispararse juntos.</p></article>
+</div>
+<h3>Propiedades de verificación</h3>
+<div class="tabla"><table><thead><tr><th>Propiedad</th><th>Qué se comprueba</th></tr></thead><tbody>
+<tr><th>Alcanzabilidad</th><td>M ∈ R(M₀) cuando existe una secuencia habilitada de M₀ a M, incluso la vacía. Una traza hacia un marcado de error sirve de contraejemplo.</td></tr>
+<tr><th>Acotación</th><td>Un lugar es k-acotado si M(p) ≤ k en todo marcado alcanzable. Una red es acotada si todos sus lugares tienen una cota finita. Una red 1-acotada se llama segura en la terminología de Petri.</td></tr>
+<tr><th>Safety</th><td>Una violación tiene un prefijo finito que la evidencia. Por ejemplo, alcanzar un marcado con dos procesos en la sección crítica. La 1-acotación es un caso particular de safety.</td></tr>
+<tr><th>Vivacidad</th><td>Una transición es viva si desde cada marcado alcanzable existe una continuación que permite dispararla. La red es viva si lo son todas. La vivacidad deja abierta la posibilidad de inanición en una ejecución concreta. Una garantía de que cada solicitud finalmente se atiende requiere analizar las ejecuciones y la equidad.</td></tr>
+<tr><th>Reversibilidad</th><td>Para todo M ∈ R(M₀), se cumple M₀ ∈ R(M). Es una propiedad del marcado inicial. Volver al modelo inicial tampoco equivale automáticamente a recuperar datos reales.</td></tr>
+</tbody></table></div>
+<aside><strong>Interbloqueo y progreso.</strong> Un marcado sin disparos habilitados es terminal. Si aún queda trabajo pendiente, representa un bloqueo en el modelo. «Nunca alcanzar un bloqueo no final» es safety. «Cada solicitud termina» es liveness sobre ejecuciones. Una traza con bloqueo puede refutar ambas garantías. En el caso de los robots, los pasillos ocupados producen exclusión mutua, retención y espera, no expropiación y espera circular.</aside>
+<h3>Redes coloreadas</h3><p>En una CPN, las marcas son valores tipados, el marcado de un lugar es un multiconjunto, y los arcos tienen expresiones. Una transición puede dispararse para una ligadura si las entradas requeridas están presentes y su guarda es verdadera. Por ejemplo, un buzón puede contener <code>Mensaje { id, destino }</code> y la guarda seleccionar un destino. La descripción puede ser compacta aunque el espacio de estados siga siendo grande o infinito.</p>
+<h3>Del requisito a la implementación</h3><p>Definí los eventos y supuestos, construí la red, formulá las propiedades y buscá pruebas o contraejemplos. Para redes finitas, el grafo de alcanzabilidad permite decidir las propiedades anteriores. En redes sin cota, una BFS puede continuar indefinidamente. El árbol de cobertura puede detectar crecimiento mediante ω y responde preguntas de cobertura, como si se pueden alcanzar al menos n marcas, con una semántica distinta de la alcanzabilidad exacta. Contrastá luego las trazas con el código y las pruebas de integración.</p>
+</section>
+<section id="laboratorio"><p class="etiqueta">SIMULACIÓN</p><h2>Laboratorio de disparos</h2>
+<p>Elegí un modelo, dispará una transición habilitada y seguí cómo cambian las marcas. La exploración comienza en el marcado inicial.</p>
+<div class="laboratorio">
+<label for="modelo">Modelo</label><select id="modelo"></select>
+<h3 id="nombre"></h3><p id="descripcion"></p>
+<div class="lienzo" tabindex="0" aria-label="Diagrama desplazable"><svg id="red" role="img" aria-labelledby="titulo-red"></svg></div>
+<div class="leyenda">○ Lugar · ▮ Transición · Número interior: marcas · Flechas: arcos</div>
+<p id="marcado" class="marcado" aria-live="polite"></p>
+<div id="disparos" class="acciones" aria-label="Disparar transición"></div>
+<div class="acciones secundaria"><button id="atras" type="button">Deshacer disparo</button><button id="reiniciar" type="button">Reiniciar</button><button id="explorar" type="button">Explorar alcanzabilidad</button></div>
+<p id="estado" role="status"></p><p id="traza"></p>
+<div id="alcanzables"></div>
+<noscript>Activá JavaScript para usar el simulador. La teoría y las resoluciones se pueden leer en esta página.</noscript>
+</div></section>
+<section id="correcciones"><p class="etiqueta">REVISIÓN DE LAS FILMINAS</p><h2>Cómo se corrigieron los modelos</h2>
+<ul>
+<li><b>Disparo y conflicto (6–7).</b> Se indica el peso 2 cuando un disparo mueve dos marcas. Para el conflicto por un recurso unitario se dibuja una sola marca y arcos de peso 1. Los ejemplos de independencia y join tienen marcas iniciales explícitas.</li>
+<li><b>Mutex (8).</b> Los arcos del recurso van de Libre a cada adquisición y de cada liberación a Libre. Cada proceso comienza con una marca de control. La red de la práctica conserva Pre y Post para distinguir finalización de bloqueo. El ejemplo de Rust explicita la liberación por alcance del guard.</li>
+<li><b>Productor–consumidor (9).</b> El búfer empieza vacío con K marcas en Libres. Producir consume un espacio libre y crea un ocupado, y consumir invierte el movimiento. El conteo abstrae orden y contenido.</li>
+<li><b>Actores (10).</b> Se separan envío, recepción e inicio del manejo, y finalización del manejo. El buzón contiene mensajes pendientes, y el control Listo/Ocupado serializa al receptor. Un rendezvous exige emisor y receptor en el mismo disparo.</li>
+<li><b>2PC (11).</b> Se separan votos, decisión durable y entrega por participante. 2PC es un protocolo de commit atómico. El ejemplo de bloqueo ocurre tras votar Sí y antes de conocer la decisión, bajo el supuesto de caída sin recuperación.</li>
+<li><b>Verificación (12 y 14).</b> Se distingue 1-acotación de safety en general, vivacidad de ausencia de inanición y finalización normal de bloqueo. Las garantías se refieren al modelo y a sus hipótesis.</li>
+</ul></section>
+<section id="actividad"><p class="etiqueta">GUÍA PRÁCTICA</p><h2>Actividad 11 resuelta</h2><p>Los enunciados se transcribieron y adaptaron a la web. Abrí la resolución después de intentar el ejercicio.</p>
+<details class="ejercicio" id="ej-1"><summary>1. ¿Por qué necesitamos Redes de Petri?</summary><div class="interior"><p>¿Qué limita al testing empírico en concurrencia? Explicá la explosión O(Mᴺ), los Heisenbugs y cómo el modelado formal ayuda a garantizar safety y liveness antes de programar.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Las pruebas cubren muestras de órdenes, entradas y fallas. Un interleaving raro puede quedar fuera.</p><p>N procesos con M estados locales admiten hasta Mᴺ combinaciones de estados locales, aun antes de agregar colas o memoria. La sincronización puede reducir las combinaciones alcanzables.</p><p>Un Heisenbug cambia su manifestación al observarlo. Registrar eventos o ejecutar paso a paso puede cambiar la planificación que activa el defecto.</p><p>En el modelo se formula safety como exclusión de estados malos y liveness como eventualidad bajo supuestos explícitos. Se buscan contraejemplos, se prueban invariantes y se evalúa la correspondencia con la implementación.</p></div></details></div></details>
+<details class="ejercicio" id="ej-2"><summary>2. Anatomía y semántica dinámica</summary><div class="interior"><p>En N = (P,T,F,W,M₀), explicá lugares, transiciones, marcas, arcos y pesos. Escribí la regla de habilitación, la ecuación del disparo y su interpretación atómica sin tiempo implícito. Relacioná el modelo con mutex, semáforos y variables de estado o guardas.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Un lugar representa una condición o reserva de recursos. Una transición es un evento. Los arcos indican qué se consume y produce y sus pesos indican las cantidades. El marcado describe el estado.</p><p>Para cada p, M(p) ≥ Pre[p,t]. Si se dispara t, M′(p) = M(p) − Pre[p,t] + Post[p,t]. El estado cambia en un único paso sin estado intermedio observable ni duración asociada.</p><p>Un mutex libre tiene una marca. Un semáforo de k permisos empieza con k marcas y cada adquisición consume una. Un conjunto de lugares con una única marca codifica una variable de estado finita. Un autoarco prueba la presencia de marcas y las repone; una guarda de CPN puede examinar valores.</p></div></details></div></details>
+<details class="ejercicio" id="ej-3"><summary>3. Exclusión mutua</summary><div class="interior"><p>¿Qué representa la marca en Mutex? Explicá por qué puede entrar un solo proceso a la vez, demostrá M(SC A) + M(SC B) ≤ 1 y relacioná el resultado con Arc&lt;Mutex&lt;T&gt;&gt; y RAII.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>La marca en Libre representa el permiso disponible. Cualquier adquisición toma ese permiso y mueve la marca local de Pre a SC. La liberación lleva la marca local de SC a Post y devuelve el permiso.</p><p>Libre + SC A + SC B = 1 inicialmente y cada disparo conserva la suma. Como todos los términos son no negativos, SC A + SC B ≤ 1. El único terminal se alcanza cuando A y B ya terminaron.</p><p>Arc comparte la propiedad del objeto. Mutex sincroniza el acceso. MutexGuard libera el lock al destruirse. Mantenerlo indefinidamente o adquirir varios locks en órdenes incompatibles puede impedir el progreso.</p></div></details></div></details>
+<details class="ejercicio" id="ej-4"><summary>4. Productor–consumidor</summary><div class="interior"><p>En un búfer acotado de capacidad K, identificá productor, consumidor, búfer, espacios libres y ocupados. ¿Cómo se evitan overflow y underflow? Obtené un invariante y relacioná el modelo con la sincronización clásica.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Producir toma una marca de Libres y agrega una a Ocupados. Consumir hace lo inverso. El estado del búfer se representa con ambos lugares. Comienza en (K,0).</p><p>Con K ≥ 1, Libres + Ocupados = K. Con cero libres no se produce; con cero ocupados no se consume. El invariante acota ambos lugares por K.</p><p>La red abstrae los dos semáforos de disponibilidad. Si la implementación manipula un búfer compartido mediante varias operaciones, hay que proteger también la actualización de su estructura. El contador abstrae el orden de los mensajes.</p></div></details></div></details>
+<details class="ejercicio" id="ej-5"><summary>5. Modelo de actores</summary><div class="interior"><p>¿Qué representan el buzón y sus marcas? Explicá qué supuestos de la topología evitan carreras de datos y relacioná el modelo con mpsc asíncrono en Rust.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>El buzón representa mensajes disponibles. Enviar añade una marca y recibir la consume. En la CPN cada marca puede portar el mensaje.</p><p>Listo + Ocupado = 1 serializa el manejo en B, y cada actor modifica su estado privado. La ausencia de memoria mutable compartida evita carreras de datos entre actores bajo ese diseño. El orden de llegada puede seguir afectando el resultado.</p><p>En Rust, Sender envía valores y Receiver los entrega a la tarea que posee el estado. El envío mueve el valor salvo que se decida copiarlo o compartir una referencia con sincronización.</p></div></details></div></details>
+<details class="ejercicio" id="ej-6"><summary>6. Two-Phase Commit (2PC)</summary><div class="interior"><p>Identificá lugares y transiciones del coordinador, participantes, Prepared, commit y abort. ¿Qué pasa con las marcas si el coordinador cae después de la votación? ¿Cómo se representa el bloqueo y qué safety se conserva?</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Preparar activa la coordinación y habilita un voto por participante. Sí mueve la marca a Prepared. Tras dos Sí se puede tomar la decisión durable Commit. Las combinaciones con al menos un No habilitan Abort en el modelo. La decisión global habilita las entregas por separado.</p><p>Con ambos Sí, Caer consume Coord. activo y conserva las marcas en Prepared. Sin recuperación ni decisión durable, el marcado Caído + A preparado + B preparado tiene grado de salida cero, con acciones de aplicación todavía pendientes.</p><p>El control del coordinador habilita a lo sumo una decisión. Las transiciones que aplican commit requieren la decisión Commit y las que aplican abort requieren Abort. Se preservan el acuerdo y la condición de que el commit requiere votos afirmativos.</p></div></details></div></details>
+<details class="ejercicio" id="ej-7"><summary>7. Propiedades formales</summary><div class="interior"><p>Definí alcanzabilidad, acotación, safety o 1-acotación, vivacidad y reversibilidad. Indicá qué problema detecta cada una y da un ejemplo. Priorizá una propiedad para banca, interbloqueo ferroviario, IoT masivo y un servidor web concurrente.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Alcanzabilidad detecta si un error es posible, por ejemplo dos trenes en un tramo. Acotación limita la ocupación de un buzón. 1-acotación impide dos marcas en un lugar que representa un permiso unitario. Safety expresa también condiciones entre varios lugares, como la exclusión de dos rutas incompatibles.</p><p>Vivacidad formal comprueba que consumir pueda volver a ocurrir desde cualquier marcado alcanzable, lo cual detecta estados que lo inhabilitan para siempre. Reversibilidad exige poder retornar al inicial, por ejemplo vaciar un búfer y recuperar todos los permisos.</p><p>Banca: safety para impedir doble débito. Ferrocarril: safety para excluir rutas incompatibles. IoT: acotación para controlar el almacenamiento pendiente. Web: progreso de solicitudes bajo supuestos explícitos de disponibilidad y equidad para evitar esperas indefinidas.</p></div></details></div></details>
+<details class="ejercicio" id="ej-8"><summary>8. Traza manual del búfer</summary><div class="interior"><p>Para un productor–consumidor con K = 2, indicá M₀ y las transiciones habilitadas. Elegí dos disparos, escribí M₁ y M₂ y justificá si es posible el deadlock.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>En el orden (Libres,Ocupados), M₀ = (2,0) y solo se habilita Producir. Tras producir, M₁ = (1,1) y se habilitan ambas. Si volvés a producir, M₂ = (0,2) y solo se habilita Consumir.</p><p>Los tres marcados son alcanzables. Libres + Ocupados = 2 garantiza que al menos un lugar tiene marcas. Las dos transiciones son vivas y el modelo es reversible. Si se agregan caídas, cierre del canal u otros controles, hay que volver a analizar la red.</p></div></details></div></details>
+<details class="ejercicio" id="ej-9"><summary>9. Redes de Petri coloreadas</summary><div class="interior"><p>¿Qué límite tienen las redes clásicas con datos complejos? ¿Qué elementos agrega una CPN y cómo reducen la duplicación del grafo? Relacioná colores y guardas con struct, enum, match con guarda y ownership.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Una red clásica puede necesitar lugares y transiciones repetidos para distinguir clases de mensajes y estados de datos. Una CPN usa conjuntos de colores, variables, expresiones de arco, ligaduras y guardas.</p><p>Un lugar Buzón puede tener mensajes de muchos destinos. Una transición con una expresión de entrada que liga msg y una guarda sobre su destino reemplaza varias ramas dibujadas. La reducción gráfica no implica reducción del espacio de estados.</p><p>struct y enum representan datos y variantes. match con una guarda if selecciona valores según un predicado. Mover un mensaje sin copiarlo puede modelarse como consumir la marca en un lugar y producirla en otro. Una CPN permite copiar datos si sus expresiones lo dicen; la propiedad de Rust se comprueba en el código.</p></div></details></div></details>
+<details class="ejercicio" id="ej-10"><summary>10. Motor de Petri y exploración en Rust</summary><div class="interior"><p>Implementá PetriNet con marcado, matrices Pre y Post, is_enabled, fire atómico y reachable_markings mediante BFS o DFS para una red pequeña. Simulá el mutex del ejercicio 3 y verificá su exclusión mutua.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>El ejemplo usa matrices indexadas por [transición][lugar], transpuestas respecto de la notación de la teoría. fire calcula primero el vector completo, y solo después reemplaza el marcado. BFS usa una cola y un HashSet para evitar reprocesar marcados.</p><p>La red de un uso por proceso tiene ocho marcados alcanzables. El programa comprueba que en cada uno Libre + SC A + SC B = 1, y luego simula una adquisición para verificar que la otra queda deshabilitada. <a href='#rust'>Ver el código</a>.</p></div></details></div></details>
+<details class="ejercicio" id="ej-11"><summary>11. Productor–consumidor asíncrono</summary><div class="interior"><p>Implementá un canal acotado de Tokio. Indicá cuándo se suspende el productor, qué acción del consumidor le permite seguir y cómo se interpreta con P_vacíos y P_llenos.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>Con el receptor abierto y sin cupo, el futuro de send queda pendiente al ser consultado. recv de un mensaje devuelve una plaza y permite que se atienda el envío pendiente cuando la tarea sea planificada.</p><p>Un envío exitoso cumple Libres → Ocupados y una recepción cumple Ocupados → Libres. El código llena el canal antes de iniciar la recepción y observa Pending de forma explícita. <a href='#rust'>Ver el código</a>.</p></div></details></div></details>
+<details class="ejercicio" id="ej-12"><summary>12. Bloqueo de 2PC y timeout</summary><div class="interior"><p>Simulá con Tokio la caída del coordinador mediante oneshot cerrado o timeout. ¿En qué estado queda el participante, por qué no decide por su cuenta, cómo aparece el bloqueo en el grafo y qué garantía se preserva?</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p>El participante que votó Sí queda en Prepared. Si vence el timeout o se cierra el canal, solo se observa que falta una decisión. Abortar unilateralmente podría contradecir un commit durable ya aplicado por otro nodo.</p><p>En el escenario sin recuperación, el grafo tiene un sumidero no final. Con recuperación o consulta a otros participantes podría haber un camino de salida. La simulación termina para mostrar el estado observado, y la transacción permanece en Prepared. Se preserva el acuerdo. <a href='#rust'>Ver el código</a>.</p></div></details></div></details>
+<details class="ejercicio" id="ej-13"><summary>13. Elección del modelo de verificación</summary><div class="interior"><p>Elegí FSM, Redes de Petri / CPN o testing empírico para los seis casos. Justificá considerando safety, liveness, concurrencia, complejidad y detección previa.</p><details class="solucion"><summary>Ver resolución</summary><div class="interior"><p><b>Formulario web secuencial · FSM.</b> Verifica pasos válidos y caminos a completar o volver. La baja concurrencia permite revisar una máquina pequeña antes de implementar.</p><p><b>Pipeline en memoria · Petri.</b> Modela productores y consumidores concurrentes con límites. Detecta sobreocupación y bloqueos en un grafo pequeño con capacidad fija antes de codificar.</p><p><b>Transacciones bancarias · CPN.</b> Los tipos distinguen cuentas y transacciones concurrentes. Permite verificar conservación de saldos y estudiar progreso bajo contención con una abstracción finita previa al código.</p><p><b>2PC y Raft · Petri/CPN para escenarios acotados.</b> 2PC requiere acuerdo de commit; Raft requiere propiedades distintas, como consistencia del log. Los mensajes y fallas se modelan explícitamente y el progreso exige supuestos. Acotar réplicas, términos o canales reduce complejidad y permite encontrar errores de diseño temprano.</p><p><b>API CRUD convencional · testing empírico.</b> Las pruebas de integración verifican restricciones, autorización y respuestas bajo cargas representativas. Las pruebas de concurrencia pueden detectar fallos de transacciones en el entorno probado. Validaciones de contrato pueden hacerse temprano y los casos reales necesitan implementación ejecutable.</p><p><b>Interbloqueo ferroviario · Petri/CPN.</b> Modela reservas y rutas concurrentes. La exclusión de rutas incompatibles es safety y la liberación o habilitación eventual exige hipótesis sobre operación. Verificar un tramo acotado permite descubrir estados inseguros o bloqueos antes del despliegue.</p></div></details></div></details>
+</section>
+<section id="rust"><p class="etiqueta">IMPLEMENTACIÓN</p><h2>Ejemplos en Rust</h2>
+<p>El ejercicio 10 requiere solo la biblioteca estándar. Para los ejercicios 11 y 12, el proyecto usa Tokio con <code>macros</code>, <code>rt</code>, <code>sync</code> y <code>time</code>. Desde la carpeta <code>rust</code>, ejecutá <code>cargo run --bin motor</code>, <code>cargo run --bin buffer</code> o <code>cargo run --bin dos_fases</code>.</p>
+<details class="ejercicio"><summary>Correspondencia entre Mutex y RAII</summary><div class="interior"><pre tabindex="0"><code>use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    let valor = Arc::new(Mutex::new(0));
+    let hilos: Vec&lt;_&gt; = (0..2).map(|_| {
+        let valor = Arc::clone(&amp;valor);
+        thread::spawn(move || {
+            let mut guard = valor.lock().unwrap();
+            *guard += 1;
+        }) // Al salir del cuerpo, se libera el permiso.
+    }).collect();
+    for hilo in hilos {
+        hilo.join().unwrap();
+    }
+    assert_eq!(*valor.lock().unwrap(), 2);
+}</code></pre></div></details><details class="ejercicio"><summary>Ejercicio 10 · Motor y mutex</summary><div class="interior"><p><a href="rust/motor.rs" download>Descargar motor.rs</a></p><pre tabindex="0"><code>use std::collections::{HashSet, VecDeque};
+
+struct PetriNet {
+    marking: Vec&lt;usize&gt;,
+    pre_matrix: Vec&lt;Vec&lt;usize&gt;&gt;,
+    post_matrix: Vec&lt;Vec&lt;usize&gt;&gt;,
+}
+
+impl PetriNet {
+    fn new(marking: Vec&lt;usize&gt;, pre: Vec&lt;Vec&lt;usize&gt;&gt;, post: Vec&lt;Vec&lt;usize&gt;&gt;) -&gt; Self {
+        assert_eq!(pre.len(), post.len());
+        assert!(pre.iter().chain(&amp;post).all(|row| row.len() == marking.len()));
+        Self { marking, pre_matrix: pre, post_matrix: post }
+    }
+
+    fn enabled_at(&amp;self, marking: &amp;[usize], t: usize) -&gt; bool {
+        self.pre_matrix.get(t).is_some_and(|pre| {
+            marking.iter().zip(pre).all(|(tokens, required)| tokens &gt;= required)
+        })
+    }
+
+    fn is_enabled(&amp;self, t: usize) -&gt; bool {
+        self.enabled_at(&amp;self.marking, t)
+    }
+
+    fn successor(&amp;self, marking: &amp;[usize], t: usize) -&gt; Result&lt;Vec&lt;usize&gt;, &amp;'static str&gt; {
+        if !self.enabled_at(marking, t) {
+            return Err("Transición inexistente o no habilitada");
+        }
+        marking.iter().enumerate().map(|(p, &amp;tokens)| {
+            (tokens - self.pre_matrix[t][p])
+                .checked_add(self.post_matrix[t][p])
+                .ok_or("Capacidad numérica excedida")
+        }).collect()
+    }
+
+    fn fire(&amp;mut self, t: usize) -&gt; Result&lt;(), &amp;'static str&gt; {
+        let next = self.successor(&amp;self.marking, t)?;
+        self.marking = next;
+        Ok(())
+    }
+
+    // Para las redes pequeñas y acotadas de esta actividad.
+    fn reachable_markings(&amp;self) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+        let mut queue = VecDeque::from([self.marking.clone()]);
+        let mut visited = HashSet::from([self.marking.clone()]);
+        let mut result = Vec::new();
+
+        while let Some(marking) = queue.pop_front() {
+            for t in 0..self.pre_matrix.len() {
+                if self.enabled_at(&amp;marking, t) {
+                    let next = self.successor(&amp;marking, t).expect("Marcado fuera de rango");
+                    if visited.insert(next.clone()) {
+                        queue.push_back(next);
+                    }
+                }
+            }
+            result.push(marking);
+        }
+        result
+    }
+}
+
+fn main() {
+    // Lugares: Pre A, SC A, Post A, Libre, Pre B, SC B, Post B.
+    // Transiciones: adquirir A, liberar A, adquirir B, liberar B.
+    let mut mutex = PetriNet::new(
+        vec![1, 0, 0, 1, 1, 0, 0],
+        vec![
+            vec![1, 0, 0, 1, 0, 0, 0],
+            vec![0, 1, 0, 0, 0, 0, 0],
+            vec![0, 0, 0, 1, 1, 0, 0],
+            vec![0, 0, 0, 0, 0, 1, 0],
+        ],
+        vec![
+            vec![0, 1, 0, 0, 0, 0, 0],
+            vec![0, 0, 1, 1, 0, 0, 0],
+            vec![0, 0, 0, 0, 0, 1, 0],
+            vec![0, 0, 0, 1, 0, 0, 1],
+        ],
+    );
+    let reachable = mutex.reachable_markings();
+    assert_eq!(reachable.len(), 8);
+    for m in &amp;reachable {
+        assert_eq!(m[1] + m[3] + m[5], 1);
+        assert!(m[1] + m[5] &lt;= 1);
+        println!("{m:?}");
+    }
+    assert!(mutex.is_enabled(0));
+    mutex.fire(0).unwrap();
+    assert!(!mutex.is_enabled(2));
+}</code></pre></div></details>
+<details class="ejercicio"><summary>Ejercicio 11 · Canal acotado</summary><div class="interior"><p><a href="rust/buffer.rs" download>Descargar buffer.rs</a></p><pre tabindex="0"><code>use std::{future::{poll_fn, Future}, task::Poll};
+use tokio::sync::mpsc;
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    const CAPACIDAD: usize = 2;
+    let (tx, mut rx) = mpsc::channel(CAPACIDAD);
+    tx.send(10).await.unwrap();
+    tx.send(20).await.unwrap();
+
+    let pendiente = tx.send(30);
+    tokio::pin!(pendiente);
+    // Consultamos una vez el futuro con el receptor abierto y el búfer lleno.
+    // Pending significa que send cedería la ejecución si se esperara con await.
+    poll_fn(|cx| {
+        assert!(pendiente.as_mut().poll(cx).is_pending());
+        Poll::Ready(())
+    }).await;
+
+    // Recibir devuelve una plaza: Ocupados → Libres.
+    assert_eq!(rx.recv().await, Some(10));
+    // El envío usa la plaza devuelta: Libres → Ocupados.
+    pendiente.await.unwrap();
+    assert_eq!(rx.recv().await, Some(20));
+    assert_eq!(rx.recv().await, Some(30));
+}</code></pre></div></details>
+<details class="ejercicio"><summary>Ejercicio 12 · Caída después del voto</summary><div class="interior"><p><a href="rust/dos_fases.rs" download>Descargar dos_fases.rs</a></p><pre tabindex="0"><code>use std::time::Duration;
+use tokio::{sync::oneshot, time::timeout};
+
+#[derive(Debug, PartialEq)]
+enum Decision { Commit, Abort }
+
+#[derive(Debug, PartialEq)]
+enum Estado { Prepared, Committed, Aborted }
+
+async fn participante(
+    voto_si: oneshot::Sender&lt;()&gt;,
+    decision: oneshot::Receiver&lt;Decision&gt;,
+) -&gt; Estado {
+    // Simula haber registrado Prepared de forma durable antes de votar Sí.
+    voto_si.send(()).expect("Coordinador desconectado antes del voto");
+    match timeout(Duration::from_secs(1), decision).await {
+        Ok(Ok(Decision::Commit)) =&gt; Estado::Committed,
+        Ok(Ok(Decision::Abort)) =&gt; Estado::Aborted,
+        Ok(Err(_)) | Err(_) =&gt; Estado::Prepared,
+    }
+}
+
+async fn escenario(decision: Option&lt;Decision&gt;) -&gt; Estado {
+    let (voto_tx, voto_rx) = oneshot::channel();
+    let (decision_tx, decision_rx) = oneshot::channel();
+    let tarea = tokio::spawn(participante(voto_tx, decision_rx));
+    voto_rx.await.unwrap();
+    if let Some(decision) = decision {
+        decision_tx.send(decision).unwrap();
+    } else {
+        // El coordinador cae después del voto. El cierre es observable,
+        // pero no contiene una decisión de la transacción.
+        drop(decision_tx);
+    }
+    tarea.await.unwrap()
+}
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let estado = escenario(None).await;
+    assert_eq!(estado, Estado::Prepared);
+    assert_eq!(escenario(Some(Decision::Commit)).await, Estado::Committed);
+    assert_eq!(escenario(Some(Decision::Abort)).await, Estado::Aborted);
+    println!("Tras la caída: {estado:?}. Hace falta resolver la decisión durable.");
+}</code></pre></div></details>
+</section>
+<section id="fuentes"><h2>Fuentes</h2><p><i>Clase 11</i> y <i>Programación Concurrente · Actividad 11</i>, Cintia Tatiana Capece, Facultad de Ingeniería, Universidad de Buenos Aires.</p><ul><li><a href="https://doi.org/10.1109/5.24143">Tadao Murata, Petri Nets: Properties, Analysis and Applications</a></li><li><a href="https://www.microsoft.com/en-us/research/publication/consensus-on-transaction-commit/">Jim Gray y Leslie Lamport, Consensus on Transaction Commit</a></li><li><a href="https://doc.rust-lang.org/book/ch16-03-shared-state.html">The Rust Programming Language, concurrencia con estado compartido</a></li><li><a href="https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.channel.html">Tokio, canal mpsc acotado</a></li></ul></section>
+</div></main>
+<footer><div class="ancho">Programación Concurrente · FIUBA <a href="#inicio">Volver al inicio</a></div></footer>
+</body></html>

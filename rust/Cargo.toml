@@ -1,0 +1,20 @@
+[package]
+name = "actividad-petri"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "rt", "sync", "time"] }
+
+[[bin]]
+name = "motor"
+path = "motor.rs"
+
+[[bin]]
+name = "buffer"
+path = "buffer.rs"
+
+[[bin]]
+name = "dos_fases"
+path = "dos_fases.rs"
