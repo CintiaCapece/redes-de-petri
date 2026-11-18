@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de Redes de Petri · Módulo 11</title>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="editor.css">
+<script defer src="editor.js"></script>
+</head>
+<body>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+<header><div class="ancho barra"><a class="marca" href="index.html">Programación Concurrente</a><nav aria-label="Navegación"><a href="index.html#laboratorio">Laboratorio</a><a href="index.html#actividad">Actividad</a><a href="#codigo">Código Rust</a></nav></div></header>
+<main id="contenido" class="ancho editor">
+<p class="etiqueta">MÓDULO 11 · REDES DE PETRI</p>
+<h1>Editor de redes</h1>
+<p>Armá una red lugar/transición, probá cómo evoluciona el marcado y ejecutá el mismo modelo en Rust.</p>
+<div class="banco">
+<section class="tarjeta espacio" aria-labelledby="lienzo-titulo">
+<div class="editor-barra"><h2 id="lienzo-titulo">Diagrama</h2><div class="acciones"><button id="ejemplo">Cargar ejemplo</button><button id="nueva" class="claro">Nueva red</button></div></div>
+<div class="acciones herramientas" aria-label="Herramientas">
+<button data-mode="select" aria-pressed="true">Seleccionar</button>
+<button data-mode="place" aria-pressed="false">Lugar</button>
+<button data-mode="transition" aria-pressed="false">Transición</button>
+<button data-mode="arc" aria-pressed="false">Arco</button>
+</div>
+<p id="ayuda"></p>
+<div class="plano"><svg id="plano" viewBox="0 0 800 420" aria-label="Diagrama editable de la red"></svg></div>
+<p class="leyenda">Círculo · lugar. Rectángulo · transición. Verde · disparo habilitado. El número dentro del lugar indica las marcas actuales.</p>
+</section>
+<section class="tarjeta inspector" aria-labelledby="modelo-titulo">
+<h2 id="modelo-titulo">Modelo</h2>
+<div class="acciones"><button id="agregar-lugar" class="claro">Añadir lugar</button><button id="agregar-transicion" class="claro">Añadir transición</button></div>
+<form id="nodo-form">
+<label for="elemento">Nodo</label><select id="elemento"></select>
+<fieldset id="nodo-datos"><label for="nombre-nodo">Nombre</label><input id="nombre-nodo" maxlength="40" required>
+<div id="marcas-campo"><label for="marcas">Marcas iniciales</label><input id="marcas" type="number" min="0" max="9999" step="1" required></div>
+<div class="acciones"><button>Aplicar</button><button type="button" class="claro" id="quitar-nodo">Eliminar nodo</button></div></fieldset>
+</form>
+<form id="arco-form"><h3>Arcos dirigidos</h3>
+<label for="origen">Origen</label><select id="origen"></select><label for="destino">Destino</label><select id="destino"></select>
+<label for="peso">Peso</label><input id="peso" type="number" min="1" max="9999" value="1" required>
+<div class="acciones"><button>Guardar arco</button></div>
+</form>
+<ul id="arcos" class="arcos"></ul>
+</section>
+</div>
+<p id="aviso" role="status"></p>
+<section class="tarjeta bloque" aria-labelledby="simular-titulo">
+<h2 id="simular-titulo">Simulación</h2>
+<p id="vector" class="marcado" aria-live="polite"></p>
+<div class="acciones" id="disparar"></div>
+<p id="historial"></p>
+<div class="acciones"><button id="deshacer" class="claro">Deshacer disparo</button><button id="reiniciar" class="claro">Volver a M₀</button><button id="explorar">Explorar desde M₀</button></div>
+<div id="resultados"></div>
+</section>
+<section id="codigo" class="tarjeta bloque">
+<h2>Código Rust de la red</h2>
+<p>El archivo se genera a partir del marcado inicial, los pesos y los nombres. Podés editarlo después de descargarlo. Usa la biblioteca estándar de Rust.</p>
+<pre><code>rustc --edition 2021 red_petri.rs
+.\red_petri.exe
+.\red_petri.exe --explorar
+.\red_petri.exe 0 1</code></pre>
+<p>El último comando intenta disparar las transiciones 0 y 1 en ese orden. En Linux o macOS usá <code>./red_petri</code>.</p>
+<button id="descargar">Descargar Rust</button>
+<details><summary>Ver código generado</summary><pre tabindex="0"><code id="fuente"></code></pre></details>
+</section>
+<noscript>Activá JavaScript para construir y simular la red.</noscript>
+</main>
+<footer><div class="ancho">Programación Concurrente · FIUBA <a href="index.html">Volver al módulo</a></div></footer>
+</body>
+</html>
